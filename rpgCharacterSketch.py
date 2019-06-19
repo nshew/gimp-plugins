@@ -23,32 +23,35 @@ def sketchCharacter (image, drawable) :
     
     # adjust saturation of top layer
     layer = image.layers[0]
-    # TODO: Verify this works:
     pdb.gimp_drawable_hue_saturation(layer, HUE_RANGE_ALL, 0, 0, -100, 0)
     layer.mode = SATURATION_MODE
     
     # create blur on middle layer
     layer = image.layers[1]
-    pdb.plug_in_gauss_iir(image, layer, 10, TRUE, TRUE)
+    pdb.gimp_drawable_invert(layer, FALSE)
     layer.mode = DODGE_MODE
+    # Gauss scale is 1-500, not 100, so 10 = 10/100*500 = 50
+    pdb.plug_in_gauss_rle2(image, layer, 50, 50)
     
     # adjust threshold of lowest layer
     layer = image.layers[2]
-    pdb.gimp_drawable_levels(layer, HISTOGRAM_VALUE, 0.04, 1, FALSE, 1.0, 0, 1, FALSE)
+    # levels scale is 0-1, not 0-255, so 10 = 15/255*1 = 0.04
+    pdb.gimp_drawable_levels(layer, HISTOGRAM_VALUE, .06, .06, FALSE, 1.0, 0, 1, FALSE) 
 
     # flatten
-    layer = pdb.gimp_image_merge_visible_layers(image, EXPAND_AS_NECESSARY)
-    #image.flatten()
+    pdb.gimp_image_merge_visible_layers(image, EXPAND_AS_NECESSARY)
+
+    # colorize (redish)
+    layer = image.layers[0]
+    pdb.gimp_drawable_colorize_hsl(layer, 12, 20.7, 47.5) #926a60, RGB(146,106,96)
     
     # cartoon
-    pdb.plug_in_cartoon(image, layer, 9, 0.7)
+    pdb.plug_in_cartoon(image, layer, 25, 0.7)
 
     pdb.plug_in_autocrop(image, layer)
 
     # Close the undo group.
     pdb.gimp_undo_push_group_end(image)
-
-    gimp.displays_flush()
 
 register(
     "python_fu_rpg_character_sketch",
@@ -57,8 +60,7 @@ register(
     "Nicholas Shewmaker",
     "Nicholas Shewmaker",
     "2019",
-#    "<Image>/Filters/Artistic/_Character Sketch",
-    "<Image>/Filters/Custom/_Character Sketch",
+    "<Image>/Filters/Custom/Character Sketch",
     "*",      # Alternately use RGB, RGB*, GRAY*, INDEXED etc.
     [],
     [],
